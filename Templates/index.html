@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank Simulation System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="bank-container">
+        <h1>💳 Bank Simulation System</h1>
+        
+        <!-- Login Form -->
+        <div id="login-box" class="form-card">
+            <h2>Login</h2>
+            <input type="email" id="login-email" placeholder="Email">
+            <input type="password" id="login-pin" placeholder="4-Digit PIN">
+            <button onclick="loginUser()">Login</button>
+            <p>Don't have an account? <span onclick="toggleForms()" class="link">Register here</span></p>
+        </div>
+
+        <!-- Register Form (Hidden by default) -->
+        <div id="register-box" class="form-card" style="display: none;">
+            <h2>Create Account</h2>
+            <input type="text" id="reg-name" placeholder="Full Name">
+            <input type="email" id="reg-email" placeholder="Email">
+            <input type="password" id="reg-pin" placeholder="Set 4-Digit PIN">
+            <button onclick="registerUser()">Register</button>
+            <p>Already have an account? <span onclick="toggleForms()" class="link">Login here</span></p>
+        </div>
+        
+        <p id="message" class="msg"></p>
+    </div>
+
+    <script>
+        function toggleForms() {
+            let loginBox = document.getElementById("login-box");
+            let regBox = document.getElementById("register-box");
+            loginBox.style.display = loginBox.style.display === "none" ? "block" : "none";
+            regBox.style.display = regBox.style.display === "none" ? "block" : "none";
+        }
+
+        async function registerUser() {
+            let name = document.getElementById("reg-name").value;
+            let email = document.getElementById("reg-email").value;
+            let pin = document.getElementById("reg-pin").value;
+
+            let res = await fetch("/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, pin })
+            });
+            let data = await res.json();
+            document.getElementById("message").innerText = data.message;
+            if(res.ok) setTimeout(toggleForms, 1500);
+        }
+
+        async function loginUser() {
+            let email = document.getElementById("login-email").value;
+            let pin = document.getElementById("login-pin").value;
+
+            let res = await fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, pin })
+            });
+            let data = await res.json();
+            if(res.ok) {
+                window.location.href = "/dashboard";
+            } else {
+                document.getElementById("message").innerText = data.message;
+            }
+        }
+    </script>
+</body>
+</html>

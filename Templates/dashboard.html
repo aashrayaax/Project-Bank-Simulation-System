@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank Simulation System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body onload="loadAccountData()">
+    <div class="dashboard-container">
+        <header>
+            <h2>Welcome, <span id="username">{{ name }}</span>!</h2>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </header>
+
+        <div class="balance-card">
+            <h3>Current Balance</h3>
+            <h1 id="balance-display">₹0.00</h1>
+        </div>
+
+        <div class="action-card">
+            <h3>Quick Actions</h3>
+            <input type="number" id="amount" placeholder="Enter amount">
+            <div class="btn-group">
+                <button onclick="makeTransaction('deposit')" class="dep-btn">Deposit</button>
+                <button onclick="makeTransaction('withdraw')" class="wit-btn">Withdraw</button>
+            </div>
+            <div class="action-card" style="margin-top: 15px;">
+    <h3>Fund Transfer</h3>
+    <input type="email" id="transfer-email" placeholder="Recipient Email">
+    <input type="number" id="transfer-amount" placeholder="Amount">
+    <button onclick="transferFunds()" style="background-color: #3498db;">Send Money</button>
+    <p id="transfer-message"></p>
+</div>
+            <p id="tx-message"></p>
+        </div>
+
+        <div class="history-card">
+            <h3>Recent Transactions</h3>
+            <ul id="tx-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        async function loadAccountData() {
+            let res = await fetch("/get_account_data");
+            if(res.status === 401) {
+                window.location.href = "/";
+                return;
+            }
+            let data = await res.json();
+            document.getElementById("balance-display").innerText = `₹${data.balance.toFixed(2)}`;
+            
+            let txList = document.getElementById("tx-list");
+            txList.innerHTML = "";
+            data.transactions.forEach(tx => {
+                let li = document.createElement("li");
+                li.innerText = `${tx.type}: ₹${tx.amount.toFixed(2)} (${tx.timestamp})`;
+                txList.appendChild(li);
+            });
+        }
+
+        async function makeTransaction(type) {
+            let amount = document.getElementById("amount").value;
+            let res = await fetch("/transaction", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type, amount })
+            });
+            let data = await res.json();
+            document.getElementById("tx-message").innerText = data.message;
+            if(res.ok) {
+                document.getElementById("amount").value = "";
+                loadAccountData();
+            }
+        }
+
+        async function transferFunds() {
+    let email = document.getElementById("transfer-email").value;
+    let amount = document.getElementById("transfer-amount").value;
+
+    let res = await fetch("/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, amount })
+    });
+    let data = await res.json();
+    document.getElementById("transfer-message").innerText = data.message;
+    if(res.ok) {
+        document.getElementById("transfer-email").value = "";
+        document.getElementById("transfer-amount").value = "";
+        loadAccountData();
+    }
+}
+    </script>
+</body>
+</html>
